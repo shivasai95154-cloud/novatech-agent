@@ -4,12 +4,13 @@ from agent import run_agent, analyze_incident
 from tools import load_system_state
 from monitor import process_incidents
 from incident_db import get_all_incidents
-from notifications import send_test_email
 
+from notifications import (
+    send_test_email,
+    send_incident_email,
+    send_resolution_email
+)
 
-# -------------------------------------------------
-# PAGE CONFIGURATION
-# -------------------------------------------------
 
 st.set_page_config(
     page_title="NovaTech AI",
@@ -31,14 +32,14 @@ st.divider()
 
 
 # -------------------------------------------------
-# PROCESS INFRASTRUCTURE
+# RUN MONITORING CYCLE
 # -------------------------------------------------
 
 monitor_results = process_incidents()
 
 
 # -------------------------------------------------
-# NEW INCIDENT ANALYSIS
+# NEW INCIDENTS
 # -------------------------------------------------
 
 for incident in monitor_results["new"]:
@@ -46,11 +47,14 @@ for incident in monitor_results["new"]:
     ai_incident = {
         "system": incident["system"],
         "status": incident["detected_status"],
-        "response_time_ms": incident["response_time_ms"]
+        "response_time_ms": incident[
+            "response_time_ms"
+        ]
     }
 
     try:
 
+        # AI analyzes the newly detected incident.
         analysis = analyze_incident(
             ai_incident
         )
@@ -68,16 +72,26 @@ for incident in monitor_results["new"]:
             analysis
         )
 
+        # Send ONE email for the newly created incident.
+        send_incident_email(
+            incident,
+            analysis
+        )
+
+        st.success(
+            "📧 Incident notification email sent."
+        )
+
     except Exception as error:
 
         st.error(
-            f"AI incident analysis failed: "
+            f"Incident processing failed: "
             f"{error}"
         )
 
 
 # -------------------------------------------------
-# RECOVERY NOTIFICATION
+# RESOLVED INCIDENTS
 # -------------------------------------------------
 
 for incident in monitor_results["resolved"]:
@@ -88,6 +102,23 @@ for incident in monitor_results["resolved"]:
         f"{incident['system'].upper()} "
         f"is healthy again."
     )
+
+    try:
+
+        send_resolution_email(
+            incident
+        )
+
+        st.success(
+            "📧 Resolution email sent."
+        )
+
+    except Exception as error:
+
+        st.error(
+            f"Resolution email failed: "
+            f"{error}"
+        )
 
 
 # -------------------------------------------------
@@ -111,11 +142,8 @@ for system_name, details in system_state.items():
     ]
 
     if status.lower() == "healthy":
-
         icon = "🟢"
-
     else:
-
         icon = "🔴"
 
     st.write(
@@ -130,7 +158,7 @@ st.divider()
 
 
 # -------------------------------------------------
-# INCIDENT DATABASE
+# INCIDENT HISTORY
 # -------------------------------------------------
 
 st.subheader(
@@ -155,11 +183,8 @@ else:
             incident["incident_status"]
             == "OPEN"
         ):
-
             icon = "🔴"
-
         else:
-
             icon = "✅"
 
         st.markdown(
@@ -173,6 +198,8 @@ else:
 **Incident Status:** {incident['incident_status']}
 
 **Detected:** {incident['detected_at']}
+
+**Resolved:** {incident['resolved_at'] or 'Not yet'}
 
 ---
 """
@@ -192,7 +219,6 @@ st.subheader(
 
 
 if "messages" not in st.session_state:
-
     st.session_state.messages = []
 
 
@@ -222,10 +248,8 @@ if user_input:
     )
 
     with st.chat_message("user"):
+        st.markdown(user_input)
 
-        st.markdown(
-            user_input
-        )
 
     with st.chat_message(
         "assistant"
@@ -244,13 +268,11 @@ if user_input:
             except Exception as error:
 
                 answer = (
-                    f"Agent error: "
-                    f"{error}"
+                    f"Agent error: {error}"
                 )
 
-        st.markdown(
-            answer
-        )
+        st.markdown(answer)
+
 
     st.session_state.messages.append(
         {
@@ -261,20 +283,13 @@ if user_input:
 
 
 # -------------------------------------------------
-# EMAIL NOTIFICATION TEST
+# MANUAL EMAIL TEST
 # -------------------------------------------------
 
 st.divider()
 
-
 st.subheader(
     "📧 Email Notification Test"
-)
-
-
-st.caption(
-    "Use this button to verify that NovaTech "
-    "can send email alerts."
 )
 
 
@@ -284,11 +299,7 @@ if st.button(
 
     try:
 
-        with st.spinner(
-            "Sending test email..."
-        ):
-
-            send_test_email()
+        send_test_email()
 
         st.success(
             "Test email sent successfully."
