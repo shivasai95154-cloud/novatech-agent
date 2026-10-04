@@ -1,26 +1,17 @@
+import json
+from pathlib import Path
+
 from langchain_core.tools import tool
 
 
-# Simulated NovaTech infrastructure.
-# Later this will be replaced by real APIs/monitoring services.
-SYSTEM_STATUS = {
-    "vpn": {
-        "status": "healthy",
-        "response_time_ms": 45
-    },
-    "website": {
-        "status": "healthy",
-        "response_time_ms": 120
-    },
-    "database": {
-        "status": "healthy",
-        "response_time_ms": 30
-    },
-    "email": {
-        "status": "healthy",
-        "response_time_ms": 80
-    }
-}
+STATE_FILE = Path(__file__).parent / "system_state.json"
+
+
+def load_system_state():
+    """Load the current simulated NovaTech infrastructure state."""
+
+    with open(STATE_FILE, "r", encoding="utf-8") as file:
+        return json.load(file)
 
 
 @tool
@@ -34,13 +25,15 @@ def check_system_health(system_name: str) -> str:
 
     system_name = system_name.lower().strip()
 
-    if system_name not in SYSTEM_STATUS:
+    system_status = load_system_state()
+
+    if system_name not in system_status:
         return (
             f"Unknown system: {system_name}. "
             "Valid systems are vpn, website, database, email."
         )
 
-    system = SYSTEM_STATUS[system_name]
+    system = system_status[system_name]
 
     return (
         f"System: {system_name}\n"
