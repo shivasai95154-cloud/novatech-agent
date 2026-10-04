@@ -1,0 +1,18 @@
+{
+  "vpn": {
+    "status": "healthy",
+    "response_time_ms": 45
+  },
+  "website": {
+    "status": "healthy",
+    "response_time_ms": 120
+  },
+  "database": {
+    "status": "healthy",
+    "response_time_ms": 30
+  },
+  "email": {
+    "status": "healthy",
+    "response_time_ms": 80
+  }
+}
