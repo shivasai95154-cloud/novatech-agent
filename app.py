@@ -4,7 +4,12 @@ from agent import run_agent, analyze_incident
 from tools import load_system_state
 from monitor import process_incidents
 from incident_db import get_all_incidents
+from notifications import send_test_email
 
+
+# -------------------------------------------------
+# PAGE CONFIGURATION
+# -------------------------------------------------
 
 st.set_page_config(
     page_title="NovaTech AI",
@@ -40,14 +45,9 @@ for incident in monitor_results["new"]:
 
     ai_incident = {
         "system": incident["system"],
-        "status": incident[
-            "detected_status"
-        ],
-        "response_time_ms": incident[
-            "response_time_ms"
-        ]
+        "status": incident["detected_status"],
+        "response_time_ms": incident["response_time_ms"]
     }
-
 
     try:
 
@@ -67,7 +67,6 @@ for incident in monitor_results["new"]:
         st.markdown(
             analysis
         )
-
 
     except Exception as error:
 
@@ -105,14 +104,11 @@ system_state = load_system_state()
 
 for system_name, details in system_state.items():
 
-    status = details[
-        "status"
-    ]
+    status = details["status"]
 
     response_time = details[
         "response_time_ms"
     ]
-
 
     if status.lower() == "healthy":
 
@@ -121,7 +117,6 @@ for system_name, details in system_state.items():
     else:
 
         icon = "🔴"
-
 
     st.write(
         f"{icon} "
@@ -152,7 +147,6 @@ if not incident_history:
         "No incidents have been recorded."
     )
 
-
 else:
 
     for incident in incident_history:
@@ -167,7 +161,6 @@ else:
         else:
 
             icon = "✅"
-
 
         st.markdown(
             f"""
@@ -228,13 +221,11 @@ if user_input:
         }
     )
 
-
     with st.chat_message("user"):
 
         st.markdown(
             user_input
         )
-
 
     with st.chat_message(
         "assistant"
@@ -257,11 +248,9 @@ if user_input:
                     f"{error}"
                 )
 
-
         st.markdown(
             answer
         )
-
 
     st.session_state.messages.append(
         {
@@ -269,3 +258,44 @@ if user_input:
             "content": answer
         }
     )
+
+
+# -------------------------------------------------
+# EMAIL NOTIFICATION TEST
+# -------------------------------------------------
+
+st.divider()
+
+
+st.subheader(
+    "📧 Email Notification Test"
+)
+
+
+st.caption(
+    "Use this button to verify that NovaTech "
+    "can send email alerts."
+)
+
+
+if st.button(
+    "Send Test Email"
+):
+
+    try:
+
+        with st.spinner(
+            "Sending test email..."
+        ):
+
+            send_test_email()
+
+        st.success(
+            "Test email sent successfully."
+        )
+
+    except Exception as error:
+
+        st.error(
+            f"Email failed: {error}"
+        )
