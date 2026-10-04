@@ -1,6 +1,6 @@
 import streamlit as st
 
-from agent import create_llm
+from agent import run_agent
 
 
 st.set_page_config(
@@ -11,24 +11,57 @@ st.set_page_config(
 
 st.title("🤖 NovaTech AI Operations Agent")
 
-st.write(
-    "Practice project for building a 24/7 Agentic AI "
-    "IT Operations and Incident Response System."
+st.caption(
+    "Agentic AI practice project — NovaTech infrastructure monitoring"
 )
 
 st.divider()
 
-if st.button("Test AI Agent"):
-    try:
-        with st.spinner("Contacting NovaTech Agent..."):
-            llm = create_llm()
 
-            response = llm.invoke(
-                "You are NovaTech's IT Operations AI. "
-                "Reply with exactly: NovaTech Agent is online."
-            )
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-        st.success(response.content)
 
-    except Exception as error:
-        st.error(f"Agent error: {error}")
+# Display previous messages.
+for message in st.session_state.messages:
+
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+
+
+# Chat input.
+user_input = st.chat_input(
+    "Ask about NovaTech infrastructure..."
+)
+
+
+if user_input:
+
+    st.session_state.messages.append(
+        {
+            "role": "user",
+            "content": user_input
+        }
+    )
+
+    with st.chat_message("user"):
+        st.markdown(user_input)
+
+    with st.chat_message("assistant"):
+
+        with st.spinner("Agent is investigating..."):
+
+            try:
+                answer = run_agent(user_input)
+
+            except Exception as error:
+                answer = f"Agent error: {error}"
+
+        st.markdown(answer)
+
+    st.session_state.messages.append(
+        {
+            "role": "assistant",
+            "content": answer
+        }
+    )
