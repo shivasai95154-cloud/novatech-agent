@@ -1,7 +1,7 @@
-"vpn": {
-  "status": "down",
-  "response_time_ms": 0
-}
+{
+  "vpn": {
+    "status": "down",
+    "response_time_ms": 0
   },
   "website": {
     "status": "healthy",
