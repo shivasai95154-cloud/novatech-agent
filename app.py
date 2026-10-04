@@ -2,8 +2,15 @@ import streamlit as st
 
 from agent import run_agent
 from tools import load_system_state
-from monitor import check_infrastructure
+from monitor import (
+    check_infrastructure,
+    analyze_detected_incident
+)
 
+
+# -------------------------------------------------
+# PAGE CONFIGURATION
+# -------------------------------------------------
 
 st.set_page_config(
     page_title="NovaTech AI",
@@ -29,6 +36,7 @@ st.divider()
 st.subheader("🖥️ Infrastructure Status")
 
 system_state = load_system_state()
+
 
 for system_name, details in system_state.items():
 
@@ -58,6 +66,7 @@ st.subheader("🚨 Incident Monitor")
 
 incidents = check_infrastructure()
 
+
 if not incidents:
 
     st.success(
@@ -65,11 +74,13 @@ if not incidents:
         "All systems are operating normally."
     )
 
+
 else:
 
     st.error(
         f"{len(incidents)} active incident(s) detected."
     )
+
 
     for incident in incidents:
 
@@ -82,6 +93,35 @@ else:
 **Response Time:** {incident['response_time_ms']} ms
 """
         )
+
+        # -----------------------------------------
+        # AUTOMATIC AI INCIDENT ANALYSIS
+        # -----------------------------------------
+
+        with st.spinner(
+            f"AI is analyzing "
+            f"{incident['system'].upper()} incident..."
+        ):
+
+            try:
+
+                analysis = analyze_detected_incident(
+                    incident
+                )
+
+                st.markdown(
+                    "#### 🤖 AI Incident Analysis"
+                )
+
+                st.markdown(analysis)
+
+
+            except Exception as error:
+
+                st.error(
+                    f"Incident analysis failed: "
+                    f"{error}"
+                )
 
 
 st.divider()
@@ -99,13 +139,19 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 
+# Display previous messages
 for message in st.session_state.messages:
 
-    with st.chat_message(message["role"]):
+    with st.chat_message(
+        message["role"]
+    ):
 
-        st.markdown(message["content"])
+        st.markdown(
+            message["content"]
+        )
 
 
+# Chat input
 user_input = st.chat_input(
     "Ask NovaTech Agent..."
 )
@@ -113,6 +159,7 @@ user_input = st.chat_input(
 
 if user_input:
 
+    # Save user message
     st.session_state.messages.append(
         {
             "role": "user",
@@ -120,11 +167,14 @@ if user_input:
         }
     )
 
+
+    # Display user message
     with st.chat_message("user"):
 
         st.markdown(user_input)
 
 
+    # Generate AI response
     with st.chat_message("assistant"):
 
         with st.spinner(
@@ -133,7 +183,10 @@ if user_input:
 
             try:
 
-                answer = run_agent(user_input)
+                answer = run_agent(
+                    user_input
+                )
+
 
             except Exception as error:
 
@@ -141,9 +194,11 @@ if user_input:
                     f"Agent error: {error}"
                 )
 
+
         st.markdown(answer)
 
 
+    # Save assistant response
     st.session_state.messages.append(
         {
             "role": "assistant",
